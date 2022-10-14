@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import { Octokit } from '@octokit/action'
+import { RequestError } from '@octokit/request-error'
 
 async function run(): Promise<void> {
 
@@ -31,30 +32,42 @@ async function run(): Promise<void> {
     auth: token,
   })
 
-  // Query container versions
-  const organizationLower = organization.toLowerCase()
-  const { data } = await octokit.request(
-      `Get /orgs/${organizationLower}/packages/container/${imageName}/versions`
-  )
-
-  // Search for the specified tag
   var foundImage = false
-  for (let container of data) {
-    const tags = container.metadata.container.tags
-    for (let tag of tags) {
-      if (tag == imageTag) {
-        foundImage = true
-        break
+
+  try {
+    // Query container versions
+    const organizationLower = organization.toLowerCase()
+    const { data } = await octokit.request(
+        `Get /orgs/${organizationLower}/packages/container/${imageName}/versions`
+    )
+
+    // Search for the specified tag
+    for (let container of data) {
+      const tags = container.metadata.container.tags
+      for (let tag of tags) {
+        if (tag == imageTag) {
+          foundImage = true
+          break
+        }
+
       }
 
+      if (foundImage) {
+        break
+      }
     }
+  } catch (err: unknown) {
 
-    if (foundImage) {
-      break
+    // If we got a 404, the container doesn't exist. Warn, but continue
+    const error = err as RequestError
+    if (error && error.status == 404) {
+      core.warning(`Container ${imageName} does not exist on the registry`)
+    } else {
+      core.setFailed(error)
     }
+  } finally {
+    core.setOutput('exists', foundImage)
   }
-
-  core.setOutput('exists', foundImage)
 }
 
 run()

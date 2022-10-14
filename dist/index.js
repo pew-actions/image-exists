@@ -1545,25 +1545,41 @@ function run() {
             core.setFailed('No access token passed to the action');
             return;
         }
-        // Query container versions
-        const organizationLower = organization.toLowerCase();
-        const octokit = new action_1.Octokit();
-        const { data } = yield octokit.request(`Get /orgs/${organizationLower}/packages/container/${imageName}/versions`);
-        // Search for the specified tag
+        const octokit = new action_1.Octokit({
+            auth: token,
+        });
         var foundImage = false;
-        for (let container of data) {
-            const tags = container.metadata.container.tags;
-            for (let tag of tags) {
-                if (tag == imageTag) {
-                    foundImage = true;
+        try {
+            // Query container versions
+            const organizationLower = organization.toLowerCase();
+            const { data } = yield octokit.request(`Get /orgs/${organizationLower}/packages/container/${imageName}/versions`);
+            // Search for the specified tag
+            for (let container of data) {
+                const tags = container.metadata.container.tags;
+                for (let tag of tags) {
+                    if (tag == imageTag) {
+                        foundImage = true;
+                        break;
+                    }
+                }
+                if (foundImage) {
                     break;
                 }
             }
-            if (foundImage) {
-                break;
+        }
+        catch (err) {
+            // If we got a 404, the container doesn't exist. Warn, but continue
+            const error = err;
+            if (error && error.status == 404) {
+                core.warning(`Container ${imageName} does not exist on the registry`);
+            }
+            else {
+                core.setFailed(error);
             }
         }
-        core.setOutput('exists', foundImage);
+        finally {
+            core.setOutput('exists', foundImage);
+        }
     });
 }
 run();
