@@ -19,5 +19,5 @@ outputs:
     description: 'Boolean value of whether or not the image:tag exists on the registry'
 
 runs:
-  using: node16
+  using: node20
   main: dist/index.js

@@ -7,13 +7,13 @@
     "build": "tsc && ncc build"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.36.1",
     "typescript": "^4.8.4"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@octokit/action": "^4.0.10",
-    "@octokit/request-error": "^3.0.2",
-    "@types/node": "^18.11.0",
-    "@zeit/ncc": "^0.22.3"
+    "@octokit/request-error": "^5.0.0",
+    "@types/node": "^18.11.0"
   }
 }
