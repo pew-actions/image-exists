@@ -28,6 +28,8 @@ async function run(): Promise<void> {
     return
   }
 
+  const packageType = core.getInput('package-type') || 'container'
+
   const octokit = new Octokit({
     auth: token,
   })
@@ -38,22 +40,34 @@ async function run(): Promise<void> {
     // Query container versions
     const organizationLower = organization.toLowerCase()
     const { data } = await octokit.request(
-        `Get /orgs/${organizationLower}/packages/container/${imageName}/versions`
+      `Get /orgs/${organizationLower}/packages/${packageType}/${imageName}/versions`
     )
 
     // Search for the specified tag
-    for (let container of data) {
-      const tags = container.metadata.container.tags
-      for (let tag of tags) {
-        if (tag == imageTag) {
+    if (packageType === 'container') {
+      for (let container of data) {
+        const tags = container.metadata.container.tags
+        for (let tag of tags) {
+          if (tag == imageTag) {
+            foundImage = true
+            break
+          }
+
+        }
+
+        if (foundImage) {
+          break
+        }
+      }
+    } else {
+      // check collapsed 0s version
+      const alternateVersion = imageTag.split('.').map(x => parseInt(x, 10)).join('.')
+
+      for (let pkg of data) {
+        if (pkg.name === imageTag || pkg.name === alternateVersion)  {
           foundImage = true
           break
         }
-
-      }
-
-      if (foundImage) {
-        break
       }
     }
   } catch (err: unknown) {

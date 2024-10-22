@@ -63,6 +63,7 @@ function run() {
             core.setFailed('No access token passed to the action');
             return;
         }
+        const packageType = core.getInput('package-type') || 'container';
         const octokit = new action_1.Octokit({
             auth: token,
         });
@@ -70,18 +71,30 @@ function run() {
         try {
             // Query container versions
             const organizationLower = organization.toLowerCase();
-            const { data } = yield octokit.request(`Get /orgs/${organizationLower}/packages/container/${imageName}/versions`);
+            const { data } = yield octokit.request(`Get /orgs/${organizationLower}/packages/${packageType}/${imageName}/versions`);
             // Search for the specified tag
-            for (let container of data) {
-                const tags = container.metadata.container.tags;
-                for (let tag of tags) {
-                    if (tag == imageTag) {
-                        foundImage = true;
+            if (packageType === 'container') {
+                for (let container of data) {
+                    const tags = container.metadata.container.tags;
+                    for (let tag of tags) {
+                        if (tag == imageTag) {
+                            foundImage = true;
+                            break;
+                        }
+                    }
+                    if (foundImage) {
                         break;
                     }
                 }
-                if (foundImage) {
-                    break;
+            }
+            else {
+                // check collapsed 0s version
+                const alternateVersion = imageTag.split('.').map(x => parseInt(x, 10)).join('.');
+                for (let pkg of data) {
+                    if (pkg.name === imageTag || pkg.name === alternateVersion) {
+                        foundImage = true;
+                        break;
+                    }
                 }
             }
         }
