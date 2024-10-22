@@ -14,6 +14,10 @@ inputs:
   image-tag:
     description: 'Tag of the image to check'
     required: true
+  package-type:
+    description: 'Type of package to query'
+    default: 'container'
+    required: false
 outputs:
   exists:
     description: 'Boolean value of whether or not the image:tag exists on the registry'
