@@ -80,7 +80,7 @@ async function run(): Promise<void> {
       core.setFailed(error)
     }
   } finally {
-    core.setOutput('exists', foundImage)
+    core.setOutput('exists', foundImage ? 'true' : null)
   }
 }
 

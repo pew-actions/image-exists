@@ -109,7 +109,7 @@ function run() {
             }
         }
         finally {
-            core.setOutput('exists', foundImage);
+            core.setOutput('exists', foundImage ? 'true' : null);
         }
     });
 }
